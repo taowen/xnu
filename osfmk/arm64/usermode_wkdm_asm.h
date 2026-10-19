@@ -12,7 +12,7 @@
 #define WKDM_GNU_STACK .section .note.GNU-stack,"",%progbits
 /* Linux owns cache configuration. Clear exactly 64 bytes without assuming
  * DC ZVA availability or its host-dependent block size. */
-#define WKDM_ZERO64(reg) stp xzr, xzr, [reg]; stp xzr, xzr, [reg, #16]; stp xzr, xzr, [reg, #32]; stp xzr, xzr, [reg, #48]
+#define WKDM_ZERO64(reg) stp xzr, xzr, [reg]; stp xzr, xzr, [reg, 16]; stp xzr, xzr, [reg, 32]; stp xzr, xzr, [reg, 48]
 #else
 #define WKDM_ADRP(reg, symbol) adrp reg, symbol@GOTPAGE
 #define WKDM_LDR(reg, symbol) ldr reg, [reg, symbol@GOTPAGEOFF]
