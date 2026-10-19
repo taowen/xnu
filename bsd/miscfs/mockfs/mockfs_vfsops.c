@@ -99,10 +99,12 @@ mockfs_mountroot(mount_t mp, vnode_t rvp, __unused vfs_context_t ctx)
 
 	if (!VNOP_IOCTL(rvp, DKIOCGETMEMDEVINFO, (caddr_t)&memdev_info, 0, NULL)) {
 		/*
-		 * For the moment, we won't try to optimize when mi_phys is true.
+		 * Only a physical memory disk can be mapped directly into the pager.
 		 */
 		if (!mockfs_mount_data->mockfs_physical_memory) {
-			mockfs_mount_data->mockfs_memory_backed = memdev_info.mi_mdev;
+			/* Virtual memory disks use normal strategy/pagein I/O; mi_base
+			 * is a physical address only when mi_phys is true. */
+			mockfs_mount_data->mockfs_memory_backed = memdev_info.mi_mdev && memdev_info.mi_phys;
 			mockfs_mount_data->mockfs_physical_memory = memdev_info.mi_phys;
 			mockfs_mount_data->mockfs_memdev_base = memdev_info.mi_base;
 			mockfs_mount_data->mockfs_memdev_size = memdev_info.mi_size;

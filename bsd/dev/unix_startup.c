@@ -52,7 +52,9 @@
 #include <pexpert/pexpert.h>
 #include <sys/socketvar.h>
 #include <pexpert/pexpert.h>
+#if INET
 #include <netinet/tcp_var.h>
+#endif
 
 extern uint32_t kern_maxvnodes;
 extern vm_map_t mb_map;
@@ -330,7 +332,7 @@ done:
 }
 #endif
 
-#if defined(__LP64__)
+#if defined(__LP64__) && INET
 extern int tcp_tcbhashsize;
 extern int max_cached_sock_count;
 #endif
@@ -359,6 +361,7 @@ bsd_scale_setup(int scale)
 		maxfilesperproc = maxfiles / 2;
 		desiredvnodes = maxfiles;
 		vnodes_sized = 1;
+#if INET
 		tcp_tfo_backlog = 100 * scale;
 		if (scale > 4) {
 			/* clip somaxconn at 32G level */
@@ -380,6 +383,7 @@ bsd_scale_setup(int scale)
 			tcp_tcbhashsize = 4 * 1024 * scale;
 			max_cached_sock_count = 60000 + ((scale - 1) * 15000);
 		}
+#endif /* INET */
 	}
 
 	if (maxproc > hard_maxproc) {
