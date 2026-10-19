@@ -48,12 +48,21 @@
 
 #if (__SIZEOF_POINTER__ == 8)
 
+/* Preserve SDT records when the userspace host is emitted as ELF. */
+#if defined(__ELF__)
+#define DTRACE_CSTRING_SECTION ".pushsection .xnu_sdt_strings, \"a\", %progbits\n\t"
+#define DTRACE_RECORD_SECTION ".pushsection .xnu_sdt, \"aw\", %progbits\n\t"
+#else
+#define DTRACE_CSTRING_SECTION ".pushsection __DATA_CONST, __sdt_cstring, cstring_literals\n\t"
+#define DTRACE_RECORD_SECTION ".pushsection __DATA_CONST, __sdt, regular, live_support\n\t"
+#endif
+
 #define DTRACE_LABEL(p, n)                                                          \
-	".pushsection __DATA_CONST, __sdt_cstring, cstring_literals\n\t"                \
+	DTRACE_CSTRING_SECTION                                                       \
 	"1: .ascii \"" DTRACE_STRINGIFY(p##___) "\\0\"\n\t"                             \
 	"2: .ascii \"" DTRACE_STRINGIFY(n) "\\0\"\n\t"                                  \
 	".popsection" "\n\t"                                                            \
-	".pushsection __DATA_CONST, __sdt, regular, live_support\n\t"                   \
+	DTRACE_RECORD_SECTION                                                        \
 	".p2align 3\n\t"                                                                \
 	"l3_%=:\n\t"                                                                    \
 	".quad 4f""\n\t"                                                                \
