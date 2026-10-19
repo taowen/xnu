@@ -4116,16 +4116,6 @@ dtrace_get_thread_inprobe(thread_t thread)
 	}
 }
 
-vm_offset_t
-thread_get_kernel_stack(thread_t thread)
-{
-	if (thread != THREAD_NULL) {
-		return thread->kernel_stack;
-	} else {
-		return 0;
-	}
-}
-
 #if KASAN
 struct kasan_thread_data *
 kasan_get_thread_data(thread_t thread)
@@ -4252,3 +4242,14 @@ dtrace_thread_didexec(thread_t thread)
 	thread->t_dtrace_flags |= TH_DTRACE_EXECSUCCESS;
 }
 #endif /* CONFIG_DTRACE */
+
+/* Generic stack introspection is also used without DTrace. */
+vm_offset_t
+thread_get_kernel_stack(thread_t thread)
+{
+	if (thread != THREAD_NULL) {
+		return thread->kernel_stack;
+	} else {
+		return 0;
+	}
+}
