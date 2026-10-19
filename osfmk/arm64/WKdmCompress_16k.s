@@ -25,6 +25,8 @@
  * 
  * @APPLE_OSREFERENCE_LICENSE_HEADER_END@
  */
+#include "usermode_wkdm_asm.h"
+
 
 /*
  This file contains arm64 hand optimized implementation of WKdm memory page compressor. 
@@ -263,10 +265,10 @@ _WKdm_compress_16k:
 	sub		byte_count, byte_count, #(12+256*scale)	// bit_count - header - tags
 	add		next_low_bits, scratch, #(2048*scale)	// &tempLowBitsArray[0]
 	stp		xzr, xzr, [dictionary, #0]		// initialize dictionary
-	adrp    hashTable, _hashLookupTable@GOTPAGE
+	WKDM_ADRP(hashTable, _hashLookupTable)
 	stp		xzr, xzr, [dictionary, #16]		// initialize dictionary
 	stp		xzr, xzr, [dictionary, #32]		// initialize dictionary
-    ldr 	hashTable, [hashTable, _hashLookupTable@GOTPAGEOFF]
+    WKDM_LDR(hashTable, _hashLookupTable)
 	stp		xzr, xzr, [dictionary, #48]		// initialize dictionary
 
 #define EARLYCHECK              0
@@ -632,3 +634,5 @@ L_check_compression_ratio:
 
     b.gt    L_budgetExhausted                           // if rax is > 0, we need to early abort
     b       L_loop                                      // we are done
+
+WKDM_GNU_STACK

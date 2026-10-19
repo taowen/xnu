@@ -32,7 +32,11 @@
 //  Rule: one define for each assembly source file
 
 //  To enable assembly
-#if defined __arm64__
+#if CONFIG_USERMODE
+/* The upstream portable encoder/decoder avoid Mach-O-only assembly. */
+#define LZ4_ENABLE_ASSEMBLY_ENCODE_ARM64 0
+#define LZ4_ENABLE_ASSEMBLY_DECODE_ARM64 0
+#elif defined __arm64__
 #define LZ4_ENABLE_ASSEMBLY_ENCODE_ARM64 1
 #define LZ4_ENABLE_ASSEMBLY_DECODE_ARM64 1
 #elif defined __ARM_NEON__

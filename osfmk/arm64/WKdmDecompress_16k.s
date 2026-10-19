@@ -25,6 +25,8 @@
  * 
  * @APPLE_OSREFERENCE_LICENSE_HEADER_END@
  */
+#include "usermode_wkdm_asm.h"
+
 
 /*
  This file contains arm64 hand optimized implementation of WKdm memory page decompressor. 
@@ -150,13 +152,13 @@ _WKdm_decompress_16k:
     mov     rax, dest_buf
     mov     rcx, #(PAGES_SIZE_IN_KBYTES*1024)   // number of bytes to zero out
 1:
-    dc      zva, rax                            // zero 64 bytes. since dest_buf is a page, it will be 4096 or 16384 byte aligned
+    WKDM_ZERO64(rax)                            // zero 64 bytes. since dest_buf is a page, it will be 4096 or 16384 byte aligned
     add     rax, rax, #64
-    dc      zva, rax
+    WKDM_ZERO64(rax)
     add     rax, rax, #64
-    dc      zva, rax
+    WKDM_ZERO64(rax)
     add     rax, rax, #64
-    dc      zva, rax
+    WKDM_ZERO64(rax)
     add     rax, rax, #64
     subs    rcx, rcx, #256
     b.ne    1b
@@ -179,12 +181,12 @@ L_default_decompressor:
 			---------------------- set up registers and PRELOAD_DICTIONARY ---------------------------------
 	*/
     // NOTE: ALL THE DICTIONARY VALUES MUST BE INITIALIZED TO ZERO TO MIRROR THE COMPRESSOR
-	adrp    rbx, _table_2bits@GOTPAGE
+	WKDM_ADRP(rbx, _table_2bits)
     stp     xzr, xzr, [dictionary, #0]
 	add		r10, src_buf, #(12+256*scale)		// TAGS_AREA_END
     stp     xzr, xzr, [dictionary, #16]
 	add		rax, src_buf, #12			// TAGS_AREA_START	
-    ldr     rbx, [rbx, _table_2bits@GOTPAGEOFF]
+    WKDM_LDR(rbx, _table_2bits)
     stp     xzr, xzr, [dictionary, #32]
 	mov		rcx, scratch				// tempTagsArray
     stp     xzr, xzr, [dictionary, #48]
@@ -227,13 +229,13 @@ L_WK_unpack_2bits:
 	// WK_unpack_4bits(QPOS_AREA_START(src_buf), QPOS_AREA_END(src_buf), tempQPosArray);
 
 	ldp		w8, w9, [src_buf]			// WKdm header qpos start and end
-	adrp    rbx, _table_4bits@GOTPAGE
+	WKDM_ADRP(rbx, _table_4bits)
 	subs	x14, r9, r8					// x14 = (QPOS_AREA_END - QPOS_AREA_START)/4
 	add		r8, src_buf, r8, lsl #2		// QPOS_AREA_START
 	add		r9, src_buf, r9, lsl #2		// QPOS_AREA_END
 
 	b.ls	1f							// if QPOS_AREA_END <= QPOS_AREA_START, skip L_WK_unpack_4bits
-    ldr     rbx, [rbx, _table_4bits@GOTPAGEOFF]
+    WKDM_LDR(rbx, _table_4bits)
 	add		rcx, scratch, #(1024*scale)		// tempQPosArray
 	ld1.4s	{v0,v1},[rbx]
 	subs	w14, w14, #1	
@@ -272,8 +274,8 @@ L_WK_unpack_4bits:
 	subs	r8, r8, r9					// LOW_BITS_AREA_START vs LOW_BITS_AREA_END
 	b.ls	1f							// if START>=END, skip L_WK_unpack_3_tenbits
 
-	adrp    rbx, _table_10bits@GOTPAGE
-    ldr     rbx, [rbx, _table_10bits@GOTPAGEOFF]
+	WKDM_ADRP(rbx, _table_10bits)
+    WKDM_LDR(rbx, _table_10bits)
 	ld1.4s	{v0,v1,v2,v3},[rbx]
 
 	/*
@@ -344,9 +346,9 @@ L_WK_unpack_3_tenbits:
 	mov		next_tag, scratch				// tempTagsArray
 	add		r8, scratch, #(1024*scale)		// next_qpos
 	add		r11, scratch, #(2048*scale)		// tempLowBitsArray 
-	adrp    rbx, _hashLookupTable@GOTPAGE
+	WKDM_ADRP(rbx, _hashLookupTable)
 	mov		tags_counter, #(1024*scale)		// tag_area_end
-    ldr     rbx, [rbx, _hashLookupTable@GOTPAGEOFF]
+    WKDM_LDR(rbx, _hashLookupTable)
 
 	b		L_next
 
@@ -425,4 +427,4 @@ L_EXACT_TAG:
 	b.gt	L_next							// repeat the loop
 	b		L_done							// if next_tag >= tag_area_end, we're done
 
-
+WKDM_GNU_STACK

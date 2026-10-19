@@ -25,10 +25,12 @@
  * 
  * @APPLE_OSREFERENCE_LICENSE_HEADER_END@
  */
+#include "usermode_wkdm_asm.h"
+
 
 
 .globl _hashLookupTable
-	.const
+	WKDM_CONST
 	.align 5
 _hashLookupTable:
 	.byte	0
@@ -328,3 +330,5 @@ _table_10bits:
 	.word	1023
 	.word	1023
 	.word	1023
+
+WKDM_GNU_STACK
