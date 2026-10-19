@@ -3573,8 +3573,8 @@ panic_display_zleaks(bool has_syms)
 }
 #endif /* CONFIG_ZLEAKS */
 
-#endif /* ZONE_ENABLE_LOGGING || CONFIG_ZLEAKS */
-#if ZONE_ENABLE_LOGGING || CONFIG_ZLEAKS || KASAN_TBI
+#endif /* ZALLOC_ENABLE_LOGGING || CONFIG_ZLEAKS */
+#if ZALLOC_ENABLE_LOGGING || CONFIG_ZLEAKS || KASAN_TBI
 
 #if !KASAN_TBI
 __cold
