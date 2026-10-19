@@ -93,7 +93,9 @@
 #include <nfs/nfs.h>
 #include <nfs/nfsm_subs.h>
 #include <nfs/nfsrvcache.h>
+#if CONFIG_NFS_SERVER
 #include <nfs/nfs_gss.h>
+#endif
 #if CONFIG_MACF
 #include <security/mac_framework.h>
 #endif

@@ -406,6 +406,7 @@ xattr_protected(const char *attrname)
 }
 
 
+#if NAMEDSTREAMS
 static void
 vnode_setasnamedstream_internal(vnode_t vp, vnode_t svp)
 {
@@ -444,15 +445,23 @@ vnode_setasnamedstream_internal(vnode_t vp, vnode_t svp)
 	return;
 }
 
+#endif /* NAMEDSTREAMS */
+
 errno_t
 vnode_setasnamedstream(vnode_t vp, vnode_t svp)
 {
+#if NAMEDSTREAMS
 	if ((vp->v_mount->mnt_kern_flag & MNTK_NAMED_STREAMS) == 0) {
 		return EINVAL;
 	}
 
 	vnode_setasnamedstream_internal(vp, svp);
 	return 0;
+#else
+	(void)vp;
+	(void)svp;
+	return ENOTSUP;
+#endif
 }
 
 #if NAMEDSTREAMS

@@ -34,6 +34,15 @@
  * cclee - CoreOS - Vector & Numerics. 06/20/2012.
  */
 
+#ifdef __ELF__
+#define CKSUM_ENTRY os_cpu_in_cksum_mbuf
+#ifdef KERNEL
+#define CKSUM_ERR kprintf
+#else
+#define CKSUM_ERR fprintf_stderr
+#endif
+#else
+#define CKSUM_ENTRY _os_cpu_in_cksum_mbuf
 #ifdef KERNEL
 #define	CKSUM_ERR _kprintf
 #else
@@ -42,6 +51,7 @@
 #endif /* !LIBSYSCALL_INTERFACE */
 #define	CKSUM_ERR _fprintf_stderr
 #endif /* !KERNEL */
+#endif /* __ELF__ */
 
 /*
  * XXX: adi@apple.com:
@@ -61,10 +71,10 @@
 #define	M_LEN	12
 #endif
 
-	.globl	_os_cpu_in_cksum_mbuf
+	.globl	CKSUM_ENTRY
 	.text
 	.align	4
-_os_cpu_in_cksum_mbuf:
+CKSUM_ENTRY:
 
 
 /*
@@ -444,8 +454,13 @@ L_continue:
 	ret	lr
 
 Lin_cksum_whoops:
+#ifdef __ELF__
+	adrp	x0, Lin_cksum_whoops_str
+	add	x0, x0, :lo12:Lin_cksum_whoops_str
+#else
 	adrp	x0, Lin_cksum_whoops_str@page
 	add	x0, x0, Lin_cksum_whoops_str@pageoff
+#endif
 	bl	#CKSUM_ERR
 	mov	x0, #-1
 	ret	lr

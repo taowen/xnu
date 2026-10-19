@@ -451,7 +451,12 @@ vfs_typenum(mount_t mp)
 void*
 vfs_mntlabel(mount_t mp)
 {
+#if CONFIG_MACF
 	return (void*)mac_mount_label(mp);
+#else
+	(void)mp;
+	return NULL;
+#endif
 }
 
 uint64_t
