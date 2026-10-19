@@ -1035,6 +1035,7 @@ ml_interrupt_masked_debug_timestamp(thread_t thread)
 }
 #endif
 
+#if !CONFIG_USERMODE /* Supplied by the Linux userspace backend. */
 boolean_t
 ml_set_interrupts_enabled_with_debug(boolean_t enable, boolean_t __unused debug)
 {
@@ -1085,17 +1086,20 @@ ml_set_interrupts_enabled_with_debug(boolean_t enable, boolean_t __unused debug)
 	return (state & DAIF_IRQF) == 0;
 }
 
+
 boolean_t
 ml_set_interrupts_enabled(boolean_t enable)
 {
 	return ml_set_interrupts_enabled_with_debug(enable, true);
 }
 
+
 boolean_t
 ml_early_set_interrupts_enabled(boolean_t enable)
 {
 	return ml_set_interrupts_enabled(enable);
 }
+#endif /* !CONFIG_USERMODE */
 
 /*
  * Interrupt enable function exported for AppleCLPC without
@@ -1113,6 +1117,7 @@ sched_perfcontrol_ml_set_interrupts_without_measurement(boolean_t enable)
  *	Routine:        ml_at_interrupt_context
  *	Function:	Check if running at interrupt context
  */
+#if !CONFIG_USERMODE /* Supplied by the Linux userspace backend. */
 boolean_t
 ml_at_interrupt_context(void)
 {
@@ -1127,6 +1132,7 @@ ml_at_interrupt_context(void)
 	 * preempted. */
 	return !ml_get_interrupts_enabled() && (getCpuDatap()->cpu_int_state != NULL);
 }
+#endif /* !CONFIG_USERMODE */
 
 vm_offset_t
 ml_stack_remaining(void)
@@ -1162,6 +1168,7 @@ ml_is_quiescing(void)
 	return ml_quiescing;
 }
 
+#if !CONFIG_USERMODE /* Supplied by the Linux userspace backend. */
 uint64_t
 ml_get_booter_memory_size(void)
 {
@@ -1180,6 +1187,7 @@ ml_get_booter_memory_size(void)
 
 	return size;
 }
+#endif /* !CONFIG_USERMODE */
 
 uint64_t
 ml_get_abstime_offset(void)
@@ -1260,12 +1268,14 @@ ml_snoop_thread_is_on_core(thread_t thread)
 	return false;
 }
 
+#if !CONFIG_USERMODE /* Supplied by the Linux userspace backend. */
 int
 ml_early_cpu_max_number(void)
 {
 	assert(startup_phase >= STARTUP_SUB_TUNABLES);
 	return ml_get_max_cpu_number();
 }
+#endif /* !CONFIG_USERMODE */
 
 void
 ml_set_max_cpus(unsigned int max_cpus __unused)
