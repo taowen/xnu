@@ -424,8 +424,8 @@ ipc_kobject_server_internal(
 		task_t curtask = tro->tro_task;
 		struct proc *curproc = tro->tro_proc;
 
-#if CONFIG_MACF
 		int idx = ptr->kobjidx;
+#if CONFIG_MACF
 		uint8_t *filter_mask = task_get_mach_kobj_filter_mask(curtask);
 
 		/* Check kobject mig filter mask, if exists. */
