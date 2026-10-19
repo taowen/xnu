@@ -507,7 +507,13 @@ ipc_kobject_server(
 	ipc_kmsg_trace_send(request, option);
 
 	if (ip_kotype(port) == IKOT_UEXT_OBJECT) {
+#if IOKIT && IOKITCPP
 		kr = uext_server(port, request, &reply);
+#else
+		/* DriverKit objects require IOUserServer's real C++ provider.
+		 * Preserve the normal MIG error/reply and right-consumption path. */
+		kr = KERN_NOT_SUPPORTED;
+#endif
 	} else {
 		kr = ipc_kobject_server_internal(port, request, &reply);
 	}
