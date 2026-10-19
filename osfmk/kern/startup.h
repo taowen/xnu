@@ -729,8 +729,19 @@ __BEGIN_DECLS
 #endif
 
 
+#if CONFIG_USERMODE && defined(__ELF__)
+/* Keep initialization phases independently linkable. A staged host can retain
+ * the genuine hooks through its last executed phase without rooting later
+ * IPC/BSD services. Full hosts retain every phase using the same objects. */
+#define __STARTUP_SECTION(subsystem) \
+	__PLACE_IN_SECTION(".xnu_startup." #subsystem)
+#else
+#define __STARTUP_SECTION(subsystem) \
+	__PLACE_IN_SECTION(STARTUP_HOOK_SEGMENT "," STARTUP_HOOK_SECTION)
+#endif
+
 #define __STARTUP1(name, line, subsystem, rank, func, a, b) \
-	__PLACE_IN_SECTION(STARTUP_HOOK_SEGMENT "," STARTUP_HOOK_SECTION) \
+	__STARTUP_SECTION(subsystem) \
 	static __startup_entry_const struct startup_entry \
 	__startup_ ## subsystem ## _entry_ ## name ## _ ## line = { \
 	    STARTUP_SUB_ ## subsystem, \
