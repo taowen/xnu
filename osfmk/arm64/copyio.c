@@ -85,7 +85,7 @@ __options_decl(copyio_flags_t, uint32_t, {
 static inline void
 user_access_enable(void)
 {
-#if __ARM_PAN_AVAILABLE__
+#if __ARM_PAN_AVAILABLE__ && !CONFIG_USERMODE
 	assert(__builtin_arm_rsr("pan") != 0);
 	__builtin_arm_wsr("pan", 0);
 #endif  /* __ARM_PAN_AVAILABLE__ */
@@ -95,7 +95,7 @@ user_access_enable(void)
 static inline void
 user_access_disable(void)
 {
-#if __ARM_PAN_AVAILABLE__
+#if __ARM_PAN_AVAILABLE__ && !CONFIG_USERMODE
 	__builtin_arm_wsr("pan", 1);
 #endif  /* __ARM_PAN_AVAILABLE__ */
 
