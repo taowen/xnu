@@ -7379,12 +7379,15 @@ process_signature(proc_t p, struct image_params *imgp)
 		goto done;
 	}
 
+#if CONFIG_MACF
 	/* call the launch constraints hook */
 	os_reason_t launch_constraint_reason;
 	if ((error = mac_proc_check_launch_constraints(p, imgp, &launch_constraint_reason)) != 0) {
 		signature_failure_reason = launch_constraint_reason;
 		goto done;
 	}
+
+#endif /* CONFIG_MACF */
 
 #if XNU_TARGET_OS_OSX
 	/* Check for platform passed in spawn attr if iOS binary is being spawned */
