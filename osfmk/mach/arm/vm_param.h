@@ -187,7 +187,12 @@ extern int PAGE_SHIFT_CONST;
  */
 
 #if XNU_KERNEL_PRIVATE
-#if defined(ARM_LARGE_MEMORY)
+#if CONFIG_USERMODE
+#include <arm/usermode_vm.h>
+#define VM_KERNEL_POINTER_SIGNIFICANT_BITS 38
+#define VM_MIN_KERNEL_ADDRESS ((vm_address_t) XNU_HOST_KERNEL_BASE)
+#define VM_MAX_KERNEL_ADDRESS ((vm_address_t) (XNU_HOST_KERNEL_LIMIT - 1))
+#elif defined(ARM_LARGE_MEMORY)
 /*
  * +-----------------------+--------+--------+------------------------+
  * | 0xffff_fe90_0000_0000 |-1472GB |  576GB | KASAN_SHADOW_MIN       |

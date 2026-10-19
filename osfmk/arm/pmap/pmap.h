@@ -223,7 +223,10 @@ typedef struct pmap_cpu_data pmap_cpu_data_t;
 #include <sys/cdefs.h>
 
 /* Base address for low globals. */
-#if defined(ARM_LARGE_MEMORY)
+#if CONFIG_USERMODE
+#include <arm/usermode_vm.h>
+#define LOW_GLOBAL_BASE_ADDRESS XNU_HOST_HEAP_BASE
+#elif defined(ARM_LARGE_MEMORY)
 #define LOW_GLOBAL_BASE_ADDRESS 0xfffffe0000000000ULL
 #else /* defined(ARM_LARGE_MEMORY) */
 #define LOW_GLOBAL_BASE_ADDRESS 0xfffffff000000000ULL
