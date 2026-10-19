@@ -64,6 +64,7 @@ void ktrace_end_single_threaded(void);
  *
  * Returns 0 if configuration is allowed, EPERM if process is not privileged,
  * and EBUSY if ktrace is owned by another process.
+ * Returns ENOTSUP if a requested subsystem was not compiled in.
  */
 int ktrace_configure(uint32_t config_mask);
 

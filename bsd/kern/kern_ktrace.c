@@ -207,9 +207,11 @@ ktrace_reset_internal(uint32_t reset_mask)
 		ktrace_active_mask &= ~reset_mask;
 	}
 
+#if KPERF
 	if (reset_mask & KTRACE_KPERF) {
 		kperf_reset();
 	}
+#endif /* KPERF */
 	if (reset_mask & KTRACE_KDEBUG) {
 		kdebug_reset();
 	}
@@ -328,6 +330,11 @@ ktrace_configure(uint32_t config_mask)
 {
 	ktrace_assert_lock_held();
 	assert(config_mask != 0);
+#if !KPERF
+	if (config_mask & KTRACE_KPERF) {
+		return ENOTSUP;
+	}
+#endif /* !KPERF */
 
 	proc_t p = current_proc();
 
@@ -383,6 +390,9 @@ void
 ktrace_kernel_configure(uint32_t config_mask)
 {
 	assert(ktrace_single_threaded == true);
+#if !KPERF
+	assert((config_mask & KTRACE_KPERF) == 0);
+#endif /* !KPERF */
 
 	if (ktrace_owner_kernel) {
 		ktrace_active_mask |= config_mask;
@@ -390,9 +400,11 @@ ktrace_kernel_configure(uint32_t config_mask)
 	}
 
 	if (ktrace_state != KTRACE_STATE_OFF) {
+#if KPERF
 		if (ktrace_active_mask & config_mask & KTRACE_KPERF) {
 			kperf_reset();
 		}
+#endif /* KPERF */
 		if (ktrace_active_mask & config_mask & KTRACE_KDEBUG) {
 			kdebug_reset();
 		}
@@ -502,9 +514,11 @@ ktrace_set_owning_proc(proc_t p)
 			ktrace_state = KTRACE_STATE_BG;
 		} else {
 			if (ktrace_state == KTRACE_STATE_BG) {
+#if KPERF
 				if (ktrace_active_mask & KTRACE_KPERF) {
 					kperf_reset();
 				}
+#endif /* KPERF */
 				if (ktrace_active_mask & KTRACE_KDEBUG) {
 					kdebug_reset();
 				}
