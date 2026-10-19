@@ -50,8 +50,8 @@
 
 /* Preserve SDT records when the userspace host is emitted as ELF. */
 #if defined(__ELF__)
-#define DTRACE_CSTRING_SECTION ".pushsection .xnu_sdt_strings, \"a\", %progbits\n\t"
-#define DTRACE_RECORD_SECTION ".pushsection .xnu_sdt, \"aw\", %progbits\n\t"
+#define DTRACE_CSTRING_SECTION ".pushsection .xnu_sdt_strings, \"a\", %%progbits\n\t"
+#define DTRACE_RECORD_SECTION ".pushsection .xnu_sdt, \"aw\", %%progbits\n\t"
 #else
 #define DTRACE_CSTRING_SECTION ".pushsection __DATA_CONST, __sdt_cstring, cstring_literals\n\t"
 #define DTRACE_RECORD_SECTION ".pushsection __DATA_CONST, __sdt, regular, live_support\n\t"
