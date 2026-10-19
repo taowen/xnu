@@ -169,9 +169,17 @@ __enum_decl(startup_rank_t, uint32_t, {
  * @description
  * Code marked with this attribute will be unmapped after kernel lockdown.
  */
+#if CONFIG_USERMODE && defined(__ELF__)
+/* A userspace host keeps ordinary text mapped for its whole lifetime. Individual
+ * function sections also let the ELF linker retain only reachable boot code. */
+#define __startup_func __attribute__((cold, visibility("hidden")))
+#define __startup_entry_const
+#else
 #define __startup_func \
 	__PLACE_IN_SECTION(STARTUP_CODE_SEGSECT) \
 	__attribute__((cold, visibility("hidden")))
+#define __startup_entry_const const
+#endif
 
 /*!
  * @macro __startup_data
@@ -723,7 +731,7 @@ __BEGIN_DECLS
 
 #define __STARTUP1(name, line, subsystem, rank, func, a, b) \
 	__PLACE_IN_SECTION(STARTUP_HOOK_SEGMENT "," STARTUP_HOOK_SECTION) \
-	static const struct startup_entry \
+	static __startup_entry_const struct startup_entry \
 	__startup_ ## subsystem ## _entry_ ## name ## _ ## line = { \
 	    STARTUP_SUB_ ## subsystem, \
 	    rank, __STARTUP_FUNC_CAST(func, a), b, \
