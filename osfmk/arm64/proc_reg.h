@@ -221,6 +221,14 @@
 /* D-Cache. */
 #define MMU_CLINE   6
 
+#elif CONFIG_USERMODE
+
+/* Host cache maintenance belongs to the Linux backend. These constants only
+ * describe the guest's cache-line alignment; no privileged cache operation
+ * may be executed by the userspace port. */
+#define MMU_I_CLINE 6
+#define MMU_CLINE   6
+
 #else
 #error processor not supported
 #endif
