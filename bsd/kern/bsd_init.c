@@ -159,7 +159,9 @@
 #include <net/netsrc.h>                 /* for netsrc_init() */
 #include <net/ntstat.h>                 /* for nstat_init() */
 #include <netinet/tcp_cc.h>                     /* for tcp_cc_init() */
+#if MPTCP
 #include <netinet/mptcp_var.h>          /* for mptcp_control_register() */
+#endif
 #include <net/nwk_wq.h>                 /* for nwk_wq_init */
 #include <net/restricted_in_port.h>     /* for restricted_in_port_init() */
 #include <net/remote_vif.h>             /* for rvi_init() */
@@ -797,11 +799,13 @@ bsd_init(void)
 	 * it happens after autoconf(), otherwise it becomes the
 	 * "primary" interface.
 	 */
+#if NETWORKING
 #include <loop.h>
 #if NLOOP > 0
 	bsd_init_kprintf("calling loopattach\n");
 	loopattach();                   /* XXX */
 #endif
+#endif /* NETWORKING */
 #if NGIF
 	/* Initialize gif interface (after lo0) */
 	gif_init();
