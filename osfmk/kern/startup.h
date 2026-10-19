@@ -190,8 +190,15 @@ __enum_decl(startup_rank_t, uint32_t, {
  * @description
  * Data marked with this attribute will be unmapped after kernel lockdown.
  */
+#if CONFIG_USERMODE && defined(__ELF__)
+/* The host never unmaps boot data. Give each variable its ordinary ELF data
+ * section: a boot thread must not retain unrelated IPC callback descriptors
+ * merely because Mach-O would place both in one per-object boot section. */
+#define __startup_data __attribute__((used))
+#else
 #define __startup_data \
 	__PLACE_IN_SECTION(STARTUP_DATA_SEGSECT)
+#endif
 
 /*!
  * @macro STARTUP
