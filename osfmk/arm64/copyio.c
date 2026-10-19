@@ -35,6 +35,9 @@
 #include <vm/vm_map.h>
 #include <san/kasan.h>
 #include <arm/pmap.h>
+#if CONFIG_USERMODE
+#include <arm64/usermode_copyio.h>
+#endif
 
 #undef copyin
 #undef copyout
@@ -226,7 +229,11 @@ copyin(const user_addr_t user_addr, void *kernel_addr, vm_size_t nbytes)
 	}
 
 	user_access_enable();
+#if CONFIG_USERMODE
+	result = xnu_usermode_copyin(user_addr, kernel_addr, nbytes);
+#else
 	result = _bcopyin((const char *)user_addr, kernel_addr, nbytes);
+#endif
 	user_access_disable();
 	return result;
 }
@@ -245,7 +252,11 @@ copyin_atomic32(const user_addr_t user_addr, uint32_t *kernel_addr)
 		return result;
 	}
 	user_access_enable();
+#if CONFIG_USERMODE
+	result = xnu_usermode_copy_atomic(user_addr, kernel_addr, 4, 0);
+#else
 	result = _copyin_atomic32((const char *)user_addr, kernel_addr);
+#endif
 	user_access_disable();
 	return result;
 }
@@ -259,7 +270,11 @@ copyin_atomic32_wait_if_equals(const user_addr_t user_addr, uint32_t value)
 		return result;
 	}
 	user_access_enable();
+#if CONFIG_USERMODE
+	result = xnu_usermode_wait32(user_addr, value);
+#else
 	result = _copyin_atomic32_wait_if_equals((const char *)user_addr, value);
+#endif
 	user_access_disable();
 	return result;
 }
@@ -273,7 +288,11 @@ copyin_atomic64(const user_addr_t user_addr, uint64_t *kernel_addr)
 		return result;
 	}
 	user_access_enable();
+#if CONFIG_USERMODE
+	result = xnu_usermode_copy_atomic(user_addr, kernel_addr, 8, 0);
+#else
 	result = _copyin_atomic64((const char *)user_addr, kernel_addr);
+#endif
 	user_access_disable();
 	return result;
 }
@@ -287,7 +306,11 @@ copyout_atomic32(uint32_t value, user_addr_t user_addr)
 		return result;
 	}
 	user_access_enable();
+#if CONFIG_USERMODE
+	result = xnu_usermode_copy_atomic(user_addr, &value, 4, 1);
+#else
 	result = _copyout_atomic32(value, (const char *)user_addr);
+#endif
 	user_access_disable();
 	return result;
 }
@@ -301,7 +324,11 @@ copyout_atomic64(uint64_t value, user_addr_t user_addr)
 		return result;
 	}
 	user_access_enable();
+#if CONFIG_USERMODE
+	result = xnu_usermode_copy_atomic(user_addr, &value, 8, 1);
+#else
 	result = _copyout_atomic64(value, (const char *)user_addr);
+#endif
 	user_access_disable();
 	return result;
 }
@@ -322,8 +349,12 @@ copyinstr(const user_addr_t user_addr, char *kernel_addr, vm_size_t nbytes, vm_s
 		return result;
 	}
 	user_access_enable();
+#if CONFIG_USERMODE
+	result = xnu_usermode_copyinstr(user_addr, kernel_addr, nbytes, &bytes_copied);
+#else
 	result = _bcopyinstr((const char *)user_addr, kernel_addr, nbytes,
 	    &bytes_copied);
+#endif
 	user_access_disable();
 	if (result != EFAULT) {
 		*lencopied = bytes_copied;
@@ -349,7 +380,11 @@ copyout(const void *kernel_addr, user_addr_t user_addr, vm_size_t nbytes)
 		return result;
 	}
 	user_access_enable();
+#if CONFIG_USERMODE
+	result = xnu_usermode_copyout(kernel_addr, user_addr, nbytes);
+#else
 	result = _bcopyout(kernel_addr, (char *)user_addr, nbytes);
+#endif
 	user_access_disable();
 	return result;
 }
