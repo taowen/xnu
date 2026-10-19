@@ -180,7 +180,9 @@ machine_switch_context(thread_t old,
 		panic("machine_switch_context");
 	}
 
+#if KPC
 	kpc_off_cpu(old);
+#endif
 
 	machine_switch_pmap_and_extended_context(old, new);
 
@@ -452,7 +454,9 @@ machine_stack_attach(thread_t thread,
 	struct arm_kernel_context *context;
 	struct arm_kernel_saved_state *savestate;
 	struct arm_kernel_neon_saved_state *neon_savestate;
+#if !CONFIG_USERMODE
 	uint32_t current_el;
+#endif
 
 #define machine_stack_attach_kprintf(x...) \
 	/* kprintf("machine_stack_attach: " x) */
@@ -469,7 +473,9 @@ machine_stack_attach(thread_t thread,
 
 	machine_stack_attach_kprintf("kstackptr: %lx\n", (vm_address_t)thread->machine.kstackptr);
 
+#if !CONFIG_USERMODE
 	current_el = (uint32_t) __builtin_arm_rsr64("CurrentEL");
+#endif
 	context = &((thread_kernel_state_t) thread->machine.kstackptr)->machine;
 	savestate = &context->ss;
 	savestate->fp = 0;
@@ -516,7 +522,9 @@ machine_stack_handoff(thread_t old,
 	}
 #endif
 
+#if KPC
 	kpc_off_cpu(old);
+#endif
 
 	stack = machine_stack_detach(old);
 #if CONFIG_STKSZ
@@ -576,9 +584,32 @@ call_continuation(thread_continue_t continuation,
 #define SET_DBGWVRn(n, value) \
 	__asm__ volatile("msr DBGWVR" #n "_EL1, %0" : : "r"(value))
 
+#if CONFIG_USERMODE
+/* Retain virtual debug state without programming privileged debug registers.
+ * Actual hardware breakpoint delivery is not part of the Linux host backend. */
+static void
+arm_debug_set_usermode(arm_debug_state_t *debug_state)
+{
+	boolean_t intr = ml_set_interrupts_enabled(FALSE);
+	cpu_data_t *cpu = getCpuDatap();
+	arm_debug_state_t *old = cpu->cpu_user_debug;
+	if (debug_state != NULL) {
+		os_ref_retain(&debug_state->ref);
+	}
+	cpu->cpu_user_debug = debug_state;
+	if (old != NULL && os_ref_release(&old->ref) == 0) {
+		zfree(ads_zone, old);
+	}
+	(void)ml_set_interrupts_enabled(intr);
+}
+#endif
+
 void
 arm_debug_set32(arm_debug_state_t *debug_state)
 {
+#if CONFIG_USERMODE
+	arm_debug_set_usermode(debug_state);
+#else
 	struct cpu_data *  cpu_data_ptr;
 	arm_debug_info_t * debug_info    = arm_debug_info();
 	boolean_t          intr;
@@ -776,11 +807,15 @@ arm_debug_set32(arm_debug_state_t *debug_state)
 
 	__builtin_arm_isb(ISB_SY);
 	(void) ml_set_interrupts_enabled(intr);
+#endif /* CONFIG_USERMODE */
 }
 
 void
 arm_debug_set64(arm_debug_state_t *debug_state)
 {
+#if CONFIG_USERMODE
+	arm_debug_set_usermode(debug_state);
+#else
 	struct cpu_data *  cpu_data_ptr;
 	arm_debug_info_t * debug_info    = arm_debug_info();
 	boolean_t          intr;
@@ -978,6 +1013,7 @@ arm_debug_set64(arm_debug_state_t *debug_state)
 
 	__builtin_arm_isb(ISB_SY);
 	(void) ml_set_interrupts_enabled(intr);
+#endif /* CONFIG_USERMODE */
 }
 
 void
@@ -1110,12 +1146,17 @@ machine_thread_set_tsd_base(thread_t         thread,
 
 	thread->machine.cthread_self = tsd_base;
 
+#if !CONFIG_USERMODE
 	/* For current thread, make the TSD base active immediately */
 	if (thread == current_thread()) {
 		mp_disable_preemption();
 		set_tpidrro(tsd_base);
 		mp_enable_preemption();
 	}
+#else
+	/* Guest TSD stays in its saved context; never overwrite the host's TLS.
+	 * The host guest-dispatch path must apply it when entering guest code. */
+#endif
 
 	return KERN_SUCCESS;
 }
