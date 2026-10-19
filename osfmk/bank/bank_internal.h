@@ -75,9 +75,9 @@ struct bank_task {
 	decl_lck_mtx_data(, bt_acc_to_charge_lock);        /* Lock to protect accounts to charge list */
 	uint32_t                  bt_persona_uid;          /* Persona UID of the process */
 	uint32_t                  bt_hasentitlement:1;     /* If the secure persona entitlement is set on the task */
-#if CONFIG_COALITIONS && CONFIG_TELEMETRY
+#if CONFIG_COALITIONS
 	uint64_t                  bt_rsrc_coal_id;         /* Task's resource coalition ID for microstackshot/telemetry */
-#endif /* CONFIG_COALITIONS && CONFIG_TELEMETRY */
+#endif /* CONFIG_COALITIONS */
 #if CONFIG_THREAD_GROUPS
 	struct thread_group *     bt_thread_group;         /* Task's home thread group pointer */
 #endif
