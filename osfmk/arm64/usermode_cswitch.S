@@ -147,4 +147,29 @@ xnu_host_run_on_stack:
     ldp x29, x30, [sp], #48
     ret
 .size xnu_host_run_on_stack, .-xnu_host_run_on_stack
+/* Like locore's noreturn ERET boundary, consume the finished kernel call
+ * chain. Saved user registers live in thread->machine.contextData, not here. */
+.section .text.thread_bootstrap_return,"ax",%progbits
+.p2align 2
+.global thread_bootstrap_return
+.type thread_bootstrap_return,%function
+thread_bootstrap_return:
+#if CONFIG_DTRACE
+    bl dtrace_thread_bootstrap
+#endif
+    b arm64_thread_exception_return
+.size thread_bootstrap_return, .-thread_bootstrap_return
+
+.section .text.arm64_thread_exception_return,"ax",%progbits
+.p2align 2
+.global arm64_thread_exception_return
+.type arm64_thread_exception_return,%function
+arm64_thread_exception_return:
+    bl xnu_host_current_thread
+    bl xnu_host_thread_stack_top
+    mov sp, x0
+    mov x29, #0
+    bl xnu_usermode_user_return
+    bl xnu_host_continuation_returned
+.size arm64_thread_exception_return, .-arm64_thread_exception_return
 .section .note.GNU-stack,"",%progbits

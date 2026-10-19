@@ -1135,12 +1135,16 @@ machine_thread_set_tsd_base(thread_t         thread,
 	}
 
 #if CONFIG_USERMODE
-	/* Saving cthread_self alone cannot activate Darwin TLS: iOS reads
-	 * TPIDRRO_EL0, whereas Linux NT_ARM_TLS controls TPIDR_EL0. Until
-	 * guest instruction/TLS adaptation is connected, do not report a
-	 * successful installation that pthread cannot actually observe. */
-	(void)tsd_base;
-	return KERN_NOT_SUPPORTED;
+	/* The engine return path installs this thread's real TPIDRRO_EL0 on
+	 * every resume. A setter in kernel context must not touch Linux TLS. */
+	if (!thread_is_64bit_addr(thread)) {
+		return KERN_NOT_SUPPORTED;
+	}
+	if (tsd_base > vm_map_max(thread->map)) {
+		tsd_base = 0ULL;
+	}
+	thread->machine.cthread_self = tsd_base;
+	return KERN_SUCCESS;
 #else
 	if (thread_is_64bit_addr(thread)) {
 		if (tsd_base > vm_map_max(thread->map)) {
