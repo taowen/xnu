@@ -48,10 +48,20 @@
 
 __ASSUME_PTR_ABI_SINGLE_BEGIN
 
+#if CONFIG_USERMODE
+/* The host scheduler owns this state; do not treat the accessor as const across
+ * a virtual context switch performed by an ordinary host function call. */
+extern thread_t xnu_host_current_thread(void);
+extern vm_offset_t xnu_host_exception_stack_pointer(void);
+static inline thread_t
+#else
 static inline __attribute__((const)) thread_t
+#endif
 current_thread_fast(void)
 {
-#if defined(__arm64__)
+#if CONFIG_USERMODE
+	return xnu_host_current_thread();
+#elif defined(__arm64__)
 	/*
 	 * rdar://73762648 clang nowadays insists that this is not constant
 	 *
@@ -93,7 +103,9 @@ current_thread_volatile(void)
 	 *
 	 * The mrc used for arm32 should be treated as volatile however.
 	 */
-#if defined(__arm64__)
+#if CONFIG_USERMODE
+	return xnu_host_current_thread();
+#elif defined(__arm64__)
 	unsigned long result;
 	__asm__ volatile ("mrs %0, TPIDR_EL1" : "=r" (result));
 	return __unsafe_forge_single(thread_t, result);
@@ -108,6 +120,9 @@ current_thread_volatile(void)
 static inline vm_offset_t
 exception_stack_pointer(void)
 {
+#if CONFIG_USERMODE
+	return xnu_host_exception_stack_pointer();
+#else
 	vm_offset_t result = 0;
 	__asm__ volatile (
                  "msr		SPSel, #1  \n"
@@ -116,6 +131,7 @@ exception_stack_pointer(void)
                  : "=r" (result));
 
 	return result;
+#endif /* CONFIG_USERMODE */
 }
 
 #endif /* defined(__arm64__) */
