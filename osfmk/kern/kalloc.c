@@ -953,8 +953,17 @@ __startup_func
 static uint64_t
 kalloc_type_view_parse(const kalloc_type_variant_t type)
 {
-	kc_format_t kc_format;
 	uint64_t cur_count = 0;
+
+#if CONFIG_USERMODE
+	/* The userspace kernel is ELF. Its linker coalesces compiler-generated
+	 * views directly; there is no Mach-O BootKC or embedded kext collection.
+	 * Preserve the real view parser and zone-assignment pipeline. */
+	kalloc_type_view_copy(type,
+	    kalloc_type_var(type, sec_start),
+	    kalloc_type_var(type, sec_end), &cur_count, false, NULL);
+#else
+	kc_format_t kc_format;
 
 	if (!PE_get_primary_kc_format(&kc_format)) {
 		panic("kalloc_type_view_parse: wasn't able to determine kc format");
@@ -1109,6 +1118,7 @@ kalloc_type_view_parse(const kalloc_type_variant_t type)
 		panic("kalloc_type_view_parse: couldn't parse kalloc_type_view structs"
 		    " for kc_format = %d\n", kc_format);
 	}
+#endif /* CONFIG_USERMODE */
 	return cur_count;
 }
 
