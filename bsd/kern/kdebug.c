@@ -263,14 +263,15 @@ unsigned int kdebug_enable = 0;
 
 #define KD_EARLY_BUFFER_SIZE (16 * 1024)
 #define KD_EARLY_EVENT_COUNT (KD_EARLY_BUFFER_SIZE / sizeof(kd_buf))
-#if defined(__x86_64__)
+#if defined(__x86_64__) || CONFIG_USERMODE
+// USERMODE uses ELF storage instead of the bare-metal ARM BOOTDATA reservation.
 __attribute__((aligned(KD_EARLY_BUFFER_SIZE)))
 static kd_buf kd_early_buffer[KD_EARLY_EVENT_COUNT];
-#else /* defined(__x86_64__) */
+#else /* bare-metal ARM */
 // On ARM, the space for this is carved out by osfmk/arm/data.s -- clang
 // has problems aligning to greater than 4K.
 extern kd_buf kd_early_buffer[KD_EARLY_EVENT_COUNT];
-#endif /* !defined(__x86_64__) */
+#endif
 
 static __security_const_late unsigned int kd_early_index = 0;
 static __security_const_late bool kd_early_overflow = false;
@@ -1582,7 +1583,7 @@ kdebug_free_early_buf(void)
 #if defined(__x86_64__)
 	ml_static_mfree((vm_offset_t)&kd_early_buffer, sizeof(kd_early_buffer));
 #endif /* defined(__x86_64__) */
-	// ARM handles this as part of the BOOTDATA segment.
+	// Bare-metal ARM reclaims BOOTDATA; USERMODE retains its static ELF buffer.
 }
 
 int
