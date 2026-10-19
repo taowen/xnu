@@ -1134,6 +1134,14 @@ machine_thread_set_tsd_base(thread_t         thread,
 		return KERN_INVALID_ARGUMENT;
 	}
 
+#if CONFIG_USERMODE
+	/* Saving cthread_self alone cannot activate Darwin TLS: iOS reads
+	 * TPIDRRO_EL0, whereas Linux NT_ARM_TLS controls TPIDR_EL0. Until
+	 * guest instruction/TLS adaptation is connected, do not report a
+	 * successful installation that pthread cannot actually observe. */
+	(void)tsd_base;
+	return KERN_NOT_SUPPORTED;
+#else
 	if (thread_is_64bit_addr(thread)) {
 		if (tsd_base > vm_map_max(thread->map)) {
 			tsd_base = 0ULL;
@@ -1146,19 +1154,15 @@ machine_thread_set_tsd_base(thread_t         thread,
 
 	thread->machine.cthread_self = tsd_base;
 
-#if !CONFIG_USERMODE
 	/* For current thread, make the TSD base active immediately */
 	if (thread == current_thread()) {
 		mp_disable_preemption();
 		set_tpidrro(tsd_base);
 		mp_enable_preemption();
 	}
-#else
-	/* Guest TSD stays in its saved context; never overwrite the host's TLS.
-	 * The host guest-dispatch path must apply it when entering guest code. */
-#endif
 
 	return KERN_SUCCESS;
+#endif /* CONFIG_USERMODE */
 }
 
 void
