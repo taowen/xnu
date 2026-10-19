@@ -3211,13 +3211,16 @@ vm_compressor_process_special_swapped_in_segments_locked(void)
 
 #if XNU_TARGET_OS_OSX
 	special_swappedin_list_head = &c_early_swappedin_list_head;
-#else /* XNU_TARGET_OS_OSX */
+#elif CONFIG_JETSAM
 	if (memorystatus_swap_all_apps) {
 		special_swappedin_list_head = &c_late_swappedin_list_head;
 	} else {
 		/* called on unsupported config*/
 		return;
 	}
+#else
+	/* No app-swap policy is available without Jetsam. */
+	return;
 #endif /* XNU_TARGET_OS_OSX */
 
 	yield_after_considered_per_pass = MAX(min_csegs_per_major_compaction, DELAYED_COMPACTIONS_PER_PASS);
@@ -4128,12 +4131,14 @@ c_seg_allocate(c_segment_t *current_chead)
 		for (int i = 0; i < vm_pageout_state.vm_compressor_thread_count; i++) {
 #if XNU_TARGET_OS_OSX
 			donate_queue_head = (c_segment_t*) &(pgo_iothread_internal_state[i].current_early_swapout_chead);
-#else /* XNU_TARGET_OS_OSX */
+#elif CONFIG_JETSAM
 			if (memorystatus_swap_all_apps) {
 				donate_queue_head = (c_segment_t*) &(pgo_iothread_internal_state[i].current_late_swapout_chead);
 			} else {
 				donate_queue_head = NULL;
 			}
+#else
+			donate_queue_head = NULL;
 #endif /* XNU_TARGET_OS_OSX */
 
 			if (current_chead == donate_queue_head) {
