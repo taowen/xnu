@@ -900,7 +900,14 @@ zone_pva_is_equal(zone_pva_t pva1, zone_pva_t pva2)
 __header_always_inline zone_pva_t *
 zone_pageq_base(void)
 {
+#if CONFIG_USERMODE
+	/* ELF has no Mach-O __DATA segment. All linked queue heads are inside
+	 * the fixed kernel image; its real base keeps their compact indices
+	 * positive even when writable orphan sections precede .data. */
+	extern zone_pva_t data_seg_start[] __asm__("__executable_start");
+#else
 	extern zone_pva_t data_seg_start[] __SEGMENT_START_SYM("__DATA");
+#endif
 
 	/*
 	 * `-1` so that if the first __DATA variable is a page queue,
