@@ -43,6 +43,10 @@
 .global xnu_host_ticket_fault_return
 hw_lck_ticket_reserve_orig_allow_invalid:
     .cfi_startproc
+    /* All ticket words require four-byte alignment, independently of whether
+     * this Linux CPU/kernel emulates or permits unaligned exclusive loads. */
+    tst x0, #3
+    b.ne xnu_host_ticket_fault_return
     mov x8, x0
     mov w9, #HW_LCK_TICKET_LOCK_INC_WORD
 xnu_host_ticket_fault_start:
