@@ -224,6 +224,13 @@ atomic_test_and_set32(uint32_t *target, uint32_t test_mask, uint32_t set_mask, e
 static NOINLINE void
 kernel_preempt_check(void)
 {
+#if CONFIG_USERMODE
+	/* Linux owns hardware IRQs; preserve the virtual CPU interrupt state. */
+	boolean_t enabled = ml_set_interrupts_enabled(FALSE);
+	if (!enabled) {
+		return;
+	}
+#else
 	uint64_t state;
 
 	/* If interrupts are masked, we can't take an AST here */
@@ -234,6 +241,7 @@ kernel_preempt_check(void)
 
 	/* disable interrupts (IRQ FIQ ASYNCF) */
 	__builtin_arm_wsr64("DAIFSet", DAIFSC_STANDARD_DISABLE);
+#endif
 
 	/*
 	 * Reload cpu_pending_ast: a context switch would cause it to change.
@@ -244,7 +252,11 @@ kernel_preempt_check(void)
 	}
 
 	/* restore the original interrupt mask */
+#if CONFIG_USERMODE
+	ml_set_interrupts_enabled(enabled);
+#else
 	__builtin_arm_wsr64("DAIF", state);
+#endif
 }
 
 static inline void
