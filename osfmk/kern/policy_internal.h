@@ -159,8 +159,9 @@ extern void proc_inherit_task_role(task_t new_task, task_t old_task);
 #define THROTTLE_LEVEL_PAGEOUT_THROTTLED        THROTTLE_LEVEL_TIER2
 #define THROTTLE_LEVEL_PAGEOUT_UNTHROTTLED      THROTTLE_LEVEL_TIER1
 
-#if CONFIG_IOSCHED
+/* Also used by the unconditional BSD throttle metadata-priority query. */
 #define IOSCHED_METADATA_TIER                   THROTTLE_LEVEL_TIER1
+#if CONFIG_IOSCHED
 #define IOSCHED_METADATA_EXPEDITED_TIER         THROTTLE_LEVEL_TIER0
 _Static_assert(IOSCHED_METADATA_EXPEDITED_TIER < IOSCHED_METADATA_TIER,
     "expedited metadata tier must be less than metadata tier");
