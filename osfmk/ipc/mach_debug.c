@@ -448,7 +448,9 @@ mach_port_kobject_description(
 	ipc_object_t object;
 	kern_return_t kr;
 	mach_vm_address_t kaddr = 0;
+#if IOKIT
 	io_object_t obj = NULL;
+#endif
 
 	if (space == IS_NULL) {
 		return KERN_INVALID_TASK;
@@ -479,9 +481,14 @@ mach_port_kobject_description(
 		case IKOT_IOKIT_CONNECT:
 		case IKOT_IOKIT_IDENT:
 		case IKOT_UEXT_OBJECT:
+#if IOKIT
 			obj = (io_object_t) kaddr;
 			iokit_add_reference(obj, IKOT_IOKIT_OBJECT);
 			break;
+#else
+			io_unlock(object);
+			return KERN_NOT_SUPPORTED;
+#endif
 
 		default:
 			break;
@@ -493,10 +500,12 @@ mach_port_kobject_description(
 
 	io_unlock(object);
 
+#if IOKIT
 	if (obj) {
 		iokit_port_object_description(obj, desc);
 		iokit_remove_reference(obj);
 	}
+#endif
 
 	return KERN_SUCCESS;
 }
