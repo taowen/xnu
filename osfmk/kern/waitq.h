@@ -100,7 +100,13 @@ __options_decl(waitq_wakeup_flags_t, uint32_t, {
 
 /* Opaque sizes and alignment used for struct verification */
 #if __arm__ || __arm64__
+#if CONFIG_USERMODE
+	/* AArch64 ELF raises __BIGGEST_ALIGNMENT__ to 16, whereas these XNU
+	 * opaque wait queues and the common port/pset header have an 8-byte ABI. */
+	#define WQ_OPAQUE_ALIGN   8
+#else
 	#define WQ_OPAQUE_ALIGN   __BIGGEST_ALIGNMENT__
+#endif
 	#if __arm__
 		#define WQ_OPAQUE_SIZE   32
 	#else
