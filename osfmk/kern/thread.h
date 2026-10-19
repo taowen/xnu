@@ -1763,7 +1763,13 @@ extern boolean_t thread_has_thread_name(thread_t th);
 extern void thread_set_thread_name(thread_t th, const char* name);
 
 #if !MACH_KERNEL_PRIVATE || !defined(current_thread)
+#if CONFIG_USERMODE
+/* A host context switch is an ordinary C call, so the accessor must not be
+ * constant-folded across it. */
+extern thread_t current_thread(void);
+#else
 extern thread_t current_thread(void) __pure2;
+#endif
 #endif
 
 extern uint64_t thread_tid(thread_t thread) __pure2;
