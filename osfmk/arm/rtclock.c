@@ -63,6 +63,9 @@
 #include <libkern/OSAtomic.h>
 
 #include <sys/kdebug.h>
+#if CONFIG_USERMODE
+#include <host/time.h>
+#endif
 
 #define MAX_TIMEBASE_TRIES 10
 
@@ -93,9 +96,12 @@ rtclock_early_init(void)
 	timebase_validation = ml_get_topology_info()->chip_revision == CPU_VERSION_A0;
 #endif
 
+#if !CONFIG_USERMODE
+	/* Hardware timebase errata overrides do not apply to a Linux clock. */
 	if (kern_feature_override(KF_MATV_OVRD)) {
 		timebase_validation = 0;
 	}
+#endif
 	if (PE_parse_boot_argn("timebase_validation", &tmp_mv, sizeof(tmp_mv))) {
 		timebase_validation = tmp_mv;
 	}
@@ -520,10 +526,14 @@ machine_delay_until(uint64_t interval,
     uint64_t deadline)
 {
 #pragma unused(interval)
+#if CONFIG_USERMODE
+	xnu_host_sleep_until(deadline);
+#else
 	uint64_t now;
 
 	do {
 		__builtin_arm_wfe();
 		now = mach_absolute_time();
 	} while (now < deadline);
+#endif
 }
