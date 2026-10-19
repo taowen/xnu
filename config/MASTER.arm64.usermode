@@ -1,9 +1,7 @@
 # ARM64 userspace-host bring-up. Platform services come from Linux.
 # doconf selects this SoC-specific file ahead of MASTER.arm64.iPhoneOS.
 # Add subsystems when needed by execution rather than inheriting the iOS image.
-# Keep assertions, but use production task/allocator paths rather than optional
-# DEVELOPMENT kext-reference tracing and allocator diagnostics during bring-up.
-#  USERMODE = [ arm64 xsmall msgb_small mach mach_bsd mach_assert importance_inheritance memorystatus config_coalitions config_embedded config_blocks config_sched_traditional config_sched_multiq ]
+#  USERMODE = [ arm64 xsmall msgb_small mach mach_bsd mach_assert development importance_inheritance memorystatus config_coalitions config_embedded config_blocks config_sched_traditional config_sched_multiq ]
 
 machine "arm64"                                      # <arm64>
 makeoptions OSFMK_MACHINE = "arm64"                   # <mach>
