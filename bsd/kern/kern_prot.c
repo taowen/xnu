@@ -1316,9 +1316,11 @@ settid_with_pid(proc_t p, struct settid_with_pid_args *uap, __unused int32_t *re
 	 * the thread_ro (tro_cred)
 	 */
 
+#if CONFIG_MACF
 	if ((error = mac_proc_check_settid(p, KAUTH_UID_NONE, KAUTH_GID_NONE)) != 0) {
 		return error;
 	}
+#endif
 
 	if (proc_suser(p) != 0 || (tro->tro_flags & TRO_SETUID) == 0) {
 		return EPERM;
