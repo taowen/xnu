@@ -930,15 +930,27 @@ zone_queue_encode(zone_pva_t *headp)
 __header_always_inline zone_pva_t
 zone_pva_from_addr(vm_address_t addr)
 {
+#if CONFIG_USERMODE
+	assert(addr >= VM_MIN_KERNEL_ADDRESS && addr <= VM_MAX_KERNEL_ADDRESS);
+	return (zone_pva_t){ 0x80000000u |
+		(uint32_t)((addr - VM_MIN_KERNEL_ADDRESS) >> PAGE_SHIFT) };
+#else
 	// cannot use atop() because we want to maintain the sign bit
 	return (zone_pva_t){ (uint32_t)((intptr_t)addr >> PAGE_SHIFT) };
+#endif
 }
 
 __header_always_inline vm_address_t
 zone_pva_to_addr(zone_pva_t page)
 {
+#if CONFIG_USERMODE
+	assert(page.packed_address & 0x80000000u);
+	return VM_MIN_KERNEL_ADDRESS +
+	       ((vm_offset_t)(page.packed_address & 0x7fffffffu) << PAGE_SHIFT);
+#else
 	// cause sign extension so that we end up with the right address
 	return (vm_offset_t)(int32_t)page.packed_address << PAGE_SHIFT;
+#endif
 }
 
 __header_always_inline struct zone_page_metadata *
@@ -968,7 +980,11 @@ zone_index_from_ptr(const void *ptr)
 __header_always_inline vm_offset_t
 zone_meta_to_addr(struct zone_page_metadata *meta)
 {
+#if CONFIG_USERMODE
+	return zone_pva_to_addr(zone_pva_from_meta(meta));
+#else
 	return ptoa((int32_t)(meta - zone_info.zi_meta_base));
+#endif
 }
 
 __attribute__((overloadable))
@@ -9662,7 +9678,12 @@ zone_bootstrap(void)
 #endif /* DEBUG || DEVELOPMENT */
 
 	/* Validate struct zone_packed_virtual_address expectations */
+#if CONFIG_USERMODE
+	static_assert(((VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS) >> PAGE_SHIFT)
+	    < 0x80000000ULL, "usermode page offsets must fit below the queue tag");
+#else
 	static_assert((intptr_t)VM_MIN_KERNEL_ADDRESS < 0, "the top bit must be 1");
+#endif
 	if (VM_KERNEL_POINTER_SIGNIFICANT_BITS - PAGE_SHIFT > 31) {
 		panic("zone_pva_t can't pack a kernel page address in 31 bits");
 	}
