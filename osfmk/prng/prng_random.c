@@ -41,6 +41,8 @@
 #include <corecrypto/cckprng.h>
 #include <corecrypto/ccsha2.h>
 
+#if !CONFIG_USERMODE
+/* USERMODE supplies these APIs from the Linux host entropy provider. */
 static struct cckprng_ctx *prng_ctx;
 
 static SECURITY_READ_ONLY_LATE(struct cckprng_funcs) prng_funcs;
@@ -351,6 +353,8 @@ write_random(void * buffer, u_int numbytes)
 
 	return 0;
 }
+
+#endif /* !CONFIG_USERMODE */
 
 /*
  * Boolean PRNG for generating booleans to randomize order of elements
